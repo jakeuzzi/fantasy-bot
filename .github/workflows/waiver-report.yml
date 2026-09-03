@@ -20,7 +20,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install espn-api anthropic requests beautifulsoup4
+        run: pip install espn-api anthropic requests
 
       - name: Run waiver wire bot
         env:
