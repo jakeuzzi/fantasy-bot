@@ -17,13 +17,12 @@ Required environment variables (set as GitHub Actions secrets):
     DISCORD_WEBHOOK_URL - (optional) webhook to post the report to
 
 Install:
-    pip install espn-api anthropic requests beautifulsoup4
+    pip install espn-api anthropic requests
 """
 
 import os
 import re
 import requests
-from bs4 import BeautifulSoup
 from espn_api.football import League
 import anthropic
 
@@ -33,16 +32,17 @@ import anthropic
 
 CURRENT_YEAR = 2026  # update each season, or compute from date if you prefer
 
-# Boris Chen tier pages — 0.5 PPR variants for positions PPR affects,
-# standard pages for QB/K/DST since reception scoring doesn't apply to them.
+# Boris Chen publishes plain-text tier files directly on S3 — no HTML
+# parsing needed. "-HALF" suffix = 0.5 PPR variants; QB/K/DST have no PPR
+# variant since reception scoring doesn't apply to them.
 POSITION_URLS = {
-    "WR": "https://www.borischen.co/p/half-05-5-ppr-wide-receiver-tier.html",
-    "RB": "https://www.borischen.co/p/half-05-5-ppr-running-back-tier-rankings.html",
-    "TE": "https://www.borischen.co/p/half-05-5-ppr-tight-end-tier-rankings.html",
-    "FLEX": "https://www.borischen.co/p/05-half-ppr-flex-tier-rankings.html",
-    "QB": "https://www.borischen.co/p/quarterback-tier-rankings.html",
-    "K": "https://www.borischen.co/p/kicker-tier-rankings.html",
-    "DST": "https://www.borischen.co/p/defense-dst-tier-rankings.html",
+    "WR": "https://s3-us-west-1.amazonaws.com/fftiers/out/text_WR-HALF.txt",
+    "RB": "https://s3-us-west-1.amazonaws.com/fftiers/out/text_RB-HALF.txt",
+    "TE": "https://s3-us-west-1.amazonaws.com/fftiers/out/text_TE-HALF.txt",
+    "FLEX": "https://s3-us-west-1.amazonaws.com/fftiers/out/text_FLX-HALF.txt",
+    "QB": "https://s3-us-west-1.amazonaws.com/fftiers/out/text_QB.txt",
+    "K": "https://s3-us-west-1.amazonaws.com/fftiers/out/text_K.txt",
+    "DST": "https://s3-us-west-1.amazonaws.com/fftiers/out/text_DST.txt",
 }
 
 SLEEPER_TRENDING_ADD_URL = (
@@ -112,17 +112,14 @@ def get_sleeper_trending_adds():
 
 
 # ---------------------------------------------------------------------------
-# Boris Chen tier scrape
+# Boris Chen tiers — plain text files, no HTML parsing required
 # ---------------------------------------------------------------------------
 
 def get_tiers(url):
     resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-    soup = BeautifulSoup(resp.text, "html.parser")
-    pre = soup.find("pre")
+    resp.raise_for_status()
     tiers = {}
-    if not pre:
-        return tiers
-    for line in pre.get_text().strip().splitlines():
+    for line in resp.text.strip().splitlines():
         m = re.match(r"Tier (\d+):\s*(.+)", line.strip())
         if m:
             tier_num = int(m.group(1))
