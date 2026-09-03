@@ -1,0 +1,33 @@
+# Save this as .github/workflows/waiver-report.yml in your repo.
+# Add the secrets listed below under Settings > Secrets and variables > Actions.
+
+name: Weekly Waiver Wire Report
+
+on:
+  schedule:
+    # 8:00 AM Phoenix time (Arizona doesn't observe DST, so UTC offset stays -7 year-round)
+    - cron: "0 15 * * 2"  # Tuesdays, 15:00 UTC = 8:00 AM MST
+  workflow_dispatch: {}  # lets you trigger it manually from the Actions tab
+
+jobs:
+  waiver-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install espn-api anthropic requests beautifulsoup4
+
+      - name: Run waiver wire bot
+        env:
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+          ESPN_LEAGUE_ID: ${{ secrets.ESPN_LEAGUE_ID }}
+          ESPN_TEAM_ID: ${{ secrets.ESPN_TEAM_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python waiver_wire_bot.py
