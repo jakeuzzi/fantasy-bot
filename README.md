@@ -3,7 +3,7 @@
 Weekly automated waiver-wire recommendations for a 0.5 PPR, 10-team ESPN
 fantasy football league. Pulls your roster and free agents from ESPN,
 blends in Sleeper trending-add data and Boris Chen tier rankings, and asks
-Claude to recommend specific add/drops — posted to Discord every Tuesday.
+Claude to recommend specific add/drops, posted to Discord every Tuesday.
 
 ## How it works
 
